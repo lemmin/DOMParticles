@@ -1,4 +1,75 @@
-  function DOMParticles (options) {
+function DOMParticles () {
+  this.particles = [];
+  this.running = false;
+  this.canvas = document.createElement('canvas');
+  this.canvas.width = window.innerWidth;
+  this.canvas.height = window.innerHeight;
+  this.ctx = this.canvas.getContext('2d');
+  document.body.appendChild(this.canvas);
+  _self = this;
+  
+  this.start = function () {
+    window.requestAnimationFrame(this.tick);
+    this.running = true;
+  }
+  
+  this.stop = function () {
+    this.running = false;
+  }
+  
+  this.tick = function () {
+    for (var i=0; i<_self.particles.length; i++) {
+      var p = _self.particles[i];
+      p.moveElement();
+    }
+    //console.log('Collision');
+    // Detect collision after everything has moved.
+    for (var i=0; i<_self.particles.length; i++) {
+      var p = _self.particles[i];
+      if (p.paused) {
+        continue;
+      }
+      //console.log('detecting: ', p);
+      p.detectCollision();
+    }
+    
+    if (_self.running) {
+      window.requestAnimationFrame(_self.tick);
+    }
+  }
+  
+  this.newParticle = function (options) {
+    var p = new Particle(options)
+    this.particles.push(p);
+    return p;
+  }
+  
+  // TODO: Implement a better method of fixing overlap. Currently,
+  // this can create another overlap when it moves the particle.
+  this.fixOverlap = function () {
+    for (var i=0; i<this.particles.length; i++) {
+      var p = this.particles[i];
+      for (var j=1; j<this.particles.length; j++) {
+        var p2 = this.particles[j];
+        if (p == p2) {
+          continue;
+        }
+        
+        var a = p.center.x-p2.center.x;
+        var b = p.center.y-p2.center.y;
+        var c = Math.sqrt(a*a+b*b);
+        var d = p.size.width/2+p2.size.width/2
+
+        if (d-c > 0) {
+          p.overlap_angle = _angleFromVector(a,b);
+          console.log('fix!');
+          //return false;
+        }
+      }
+    }
+  }
+  
+  function Particle (options) {
     // TODO: implement friction.
     
     // Physical parameters.
